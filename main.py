@@ -1,15 +1,25 @@
 import numpy as np
-
+import math
 #q;v;mu;lda
 
 def N(q,v):
-
+    return g*q-a_3/3-a_1*v*v*q+b*v*q+1/2*q*q*v
 
 def N_v(q,v):
-
+    return (-2*a_1*q*v+v*q)
 
 def inverse_NI(mu,v,rho):
-    
+    delta = v*v+4*a_3*(g-a*v*v+b*v+2/rho*a*v-1/rho*b-mu)
+    if delta>0:
+        x = (-v+math.sqrt(delta))/(2*a_3)
+        if x<0:
+            print("no solution")
+            return -1000
+        else:
+            return x
+    else:
+        print("no solution")
+        return -1000
 
 def I_cal(q,v,alpha,lda,rho):
     if alpha<lda:
@@ -30,7 +40,11 @@ def allocation(N,lda,mu_list,alpha_list,v_list,B_list,q_0,rho_list):
         q_acc = 0
         demand_acc = 0
         for i in range(N):
-            q.append(inverse_I(mu,alpha_list[i],lda,v_list[i],rho_list[i]))
+            if inverse_I==-1000:
+                x = 0
+            else:
+                x = inverse_I(mu,alpha_list[i],lda,v_list[i],rho_list[i])
+            q.append(x)
             q_acc += q[-1]
         if q_acc>q_0:
             break
@@ -69,5 +83,8 @@ def rounding(N,alpha_list,lda,flag,v_list,interval,vmax,vmin):
 def rho_cal(N,vmax,vmin,v_list):
     rho = [None]*N
     for i in range(N):
-        rho[i] = 
+        rho[i] = (1/((v_max[i]-v_min[i])))/[(v_max[i]-v_list[i])/(v_max[i]-v_min[i])]
     return rho
+
+if if __name__ == "__main__":
+    q,lda,R = demand_satisfy()
