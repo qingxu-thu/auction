@@ -110,8 +110,11 @@ def read(name):
     #G = np.array(table.col_values(0), dtype = "float64")
     return B,alpha
 
-def q_quantile_cal(F_dis):
+def sample_stat(v_list):
+    
 
+def q_quantile_cal(F_dis):
+    
 
 if __name__ == "__main__":
     name = './data.xlsx'
