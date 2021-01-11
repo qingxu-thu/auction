@@ -1,5 +1,6 @@
 import numpy as np
 import math
+import xlrd
 #q;v;mu;lda
 
 def N(q,v):
@@ -56,7 +57,7 @@ def allocation(N,lda,mu_list,alpha_list,v_list,B_list,q_0,rho_list):
 
 def demand_satisfy(N,lda_list,mu_list,alpha_list,v_list,B_list,q_0,d,rho_list,vmax,vmin,flag):
     for lda in lda_list:
-        v_list = rounding(N,alpha_list,lda,flag,v_list,interval,vmax,vmin):
+        v_list = rounding(N,alpha_list,lda,flag,v_list,interval,vmax,vmin)
         demand, q, mu, q_acc = allocation(N,lda,mu_list,alpha_list,v_list,B_list,q_0,rho_list)
         if demand>d:
             R = revenue_cal(N,q,alpha_list,v_list,lda,rho_list)
@@ -86,5 +87,17 @@ def rho_cal(N,vmax,vmin,v_list):
         rho[i] = (1/((v_max[i]-v_min[i])))/[(v_max[i]-v_list[i])/(v_max[i]-v_min[i])]
     return rho
 
+def read(name):
+    data = xlrd.open_workbook(name)
+    table = data.sheets()[0]
+    B = np.array(table.col_values(0), dtype = "float64")
+    alpha = np.array(table.col_values(1), dtype = "float64")
+    #G = np.array(table.col_values(0), dtype = "float64")
+    return B,alpha
+
 if if __name__ == "__main__":
-    q,lda,R = demand_satisfy()
+
+
+    N = 20
+    B_list = 
+    q,lda,R = demand_satisfy(N,lda_list,mu_list,alpha_list,v_list,B_list,q_0,d,rho_list,vmax,vmin,flag)
