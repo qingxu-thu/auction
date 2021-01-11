@@ -95,9 +95,9 @@ def read(name):
     #G = np.array(table.col_values(0), dtype = "float64")
     return B,alpha
 
-if if __name__ == "__main__":
-
-
-    N = 20
-    B_list = 
+if __name__ == "__main__":
+    name = './data.xlsx'
+    B_list,alpha =  read(name)
+    v_list = 
+    
     q,lda,R = demand_satisfy(N,lda_list,mu_list,alpha_list,v_list,B_list,q_0,d,rho_list,vmax,vmin,flag)
