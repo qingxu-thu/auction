@@ -111,12 +111,25 @@ def read(name):
     return B,alpha
 
 
-def sample_stat(F_sample):
+def sample_stat(N,F_sample,v_max,v_min,interval):
+    dis_array = []
+    for i in range(N):
+        fre, point = np.histogram(F_sample, bins=int((v_max[i]-v_min[i])/interval), density=True)
+        F = np.cumsum(fre)
+        dis_array.append(F)
+    return dis_array
 
-    
+def all_F_q_cal(N,dis_array,v_list,v_min,interval):
+    q = np.zeros((N))
+    for i in range(N):
+        q[i] = q_quantile_cal(dis_array[i],v_list[i],v_min[i],interval)
+    return q
 
-def all_F_q_cal(F_sample,v_list,v_min,interval):
-
+def q_v(N,v_min,v_max):
+    v = np.zeros((N))
+    for i in range(N):
+        v[i] = (v_max[i]-v_min[i])*q+v_min[i]
+    return v
 
 def q_quantile_cal(F_dis,v,v_min,interval):
    a = int((v-v_min)/interval)
