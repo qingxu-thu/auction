@@ -91,7 +91,7 @@ def rounding(N,alpha_list,lda,flag,v_list,interval,vmax,vmin):
         v = [None]*N
         for i in range(N):
             if alpha_list[i]<lda:
-                v[i] = (int((v_list[i]-vmin[i])/interval)+1)*interval
+                v[i] = (int((v_list[i]-vmin[i])/interval)+1)*interval+v_min[i]
             else:
                 v[i] = v_max-(int((v_max[i]-v_list[i])/interval)+1)*interval
         return v
@@ -110,11 +110,20 @@ def read(name):
     #G = np.array(table.col_values(0), dtype = "float64")
     return B,alpha
 
-def sample_stat(v_list):
+
+def sample_stat(F_sample):
+
     
 
-def q_quantile_cal(F_dis):
-    
+def all_F_q_cal(F_sample,v_list,v_min,interval):
+
+
+def q_quantile_cal(F_dis,v,v_min,interval):
+   a = int((v-v_min)/interval)
+   q = np.random.uniform(F_dis[a],F_dis[a+1],1)
+   return q
+
+
 
 if __name__ == "__main__":
     name = './data.xlsx'
