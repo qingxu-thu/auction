@@ -70,13 +70,27 @@ def allocation(N,lda,mu_list,alpha_list,v_list,B_list,q_0,rho_list):
     return demand_acc, q, mu, q_acc
 
 
-def demand_satisfy(N,lda_list,mu_list,alpha_list,v_list,B_list,q_0,d,rho_list,vmax,vmin,flag,interval=0):
+def demand_satisfy(N,lda_list,mu_list,alpha_list,v_list,B_list,q_0,d,rho_list,vmax,vmin):
     for lda in lda_list:
-        v_list = rounding(N,alpha_list,lda,flag,v_list,interval,vmax,vmin)
         demand, q, mu, q_acc = allocation(N,lda,mu_list,alpha_list,v_list,B_list,q_0,rho_list)
         if demand>d:
             R = revenue_cal(N,q,alpha_list,v_list,lda,rho_list)
             return q,lda,R
+
+def demand_sample(N,lda_list,mu_list,alpha_list,B_list,q_0,d,rho_list,vmax,vmin,epoch):
+    v_list = np.random.rand((N))*(v_max-v_min)+v_min
+    for itr in range(epoch):
+        interval = 0.5* (1/(itr*itr*itr))
+        if itr == 0:
+            v_sample = v_list
+            v_rounding = rounding(N,alpha_list,np.zeros((1,1)),v_list.reshape((-1,1)),interval,vmax,vmin)
+        else:
+            v_sample = np.concatenate((v_sample,v_list.reshape((-1,1))),1)
+            v_rounding = rounding(N,alpha_list,lda_list,v_sample,interval,vmax,vmin)
+        dis_sample = sample_stat(N,v_sample,v_max,v_min,interval)
+        q = all_F_q_cal(N,dis_sample,v_list,v_min,interval)
+
+
 
 def revenue_cal(N,q,alpha_list,v_list,lda,rho_list):
     I = 0
@@ -84,17 +98,15 @@ def revenue_cal(N,q,alpha_list,v_list,lda,rho_list):
         I+=I_cal(q[i],v_list[i],alpha_list[i],lda,rho_list[i]) 
     return I
 
-def rounding(N,alpha_list,lda,flag,v_list,interval,vmax,vmin):
-    if flag==0:
-        return v_list
-    else:
-        v = [None]*N
-        for i in range(N):
-            if alpha_list[i]<lda:
-                v[i] = (int((v_list[i]-vmin[i])/interval)+1)*interval+v_min[i]
+def rounding(N,alpha_list,lda_list,v_list,interval,vmax,vmin):
+    v = np.zeros(v_list.shape)
+    for i in range(N):
+        for j in range(v_list.shape[1]):
+            if alpha_list[i]<lda_list[j]:
+                v[i,j] = (int((v_list[i]-vmin[i])/interval)+1)*interval+v_min[i]
             else:
-                v[i] = v_max-(int((v_max[i]-v_list[i])/interval)+1)*interval
-        return v
+                v[i,j] = v_max-(int((v_max[i]-v_list[i])/interval)+1)*interval
+    return v
 
 def rho_cal(N,vmax,vmin,v_list):
     rho = [None]*N
@@ -118,6 +130,7 @@ def sample_stat(N,F_sample,v_max,v_min,interval):
         F = np.cumsum(fre)
         dis_array.append(F)
     return dis_array
+
 
 def all_F_q_cal(N,dis_array,v_list,v_min,interval):
     q = np.zeros((N))
@@ -154,9 +167,6 @@ if __name__ == "__main__":
     q_0 = prop*np.sum(B_list)
     d = (B_list+q_0)*prop_2
     flag = 1
-    q,lda,R = demand_satisfy(N,lda_list,mu_list,alpha_list,v_list,B_list,q_0,d,rho_list,v_max,v_min,flag)
+    q,lda,R = demand_satisfy(N,lda_list,mu_list,alpha_list,v_list,B_list,q_0,d,rho_list,v_max,v_min)
 
     flag = 0
-
-
-    interval_size = 0.01*()
