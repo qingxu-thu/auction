@@ -1,6 +1,8 @@
 import numpy as np
 import math
 import xlrd
+from matplotlib import pyplot as plt
+
 #q;v;mu;lda
 
 g = 0.5
@@ -79,16 +81,34 @@ def demand_satisfy(N,lda_list,mu_list,alpha_list,v_list,B_list,q_0,d,rho_list,vm
 
 def demand_sample(N,lda_list,mu_list,alpha_list,B_list,q_0,d,rho_list,vmax,vmin,epoch):
     v_list = np.random.rand((N))*(v_max-v_min)+v_min
+    lda_list = []
+    R_list = []
+    q_list = []
+    mu_list_use = []
+    q_acc_list = []
     for itr in range(epoch):
         interval = 0.5* (1/(itr*itr*itr))
         if itr == 0:
+            v_rounding = rounding(N, alpha_list, np.zeros((1,1)), v_list.reshape((-1, 1)), interval, vmax, vmin)
+        else:
+            v_rounding = rounding(N, alpha_list, lda_list, v_sample, interval, vmax, vmin)
+        dis_sample = sample_stat(N, v_rounding, v_max, v_min, interval)
+        q = all_F_q_cal(N,dis_sample,v_list,v_min,interval)
+        v_list_after = q_v(N,v_min,v_max,q)
+        for lda in alpha_lsit:
+            demand, q, mu, q_acc = allocation(N, lda, mu_list, alpha_list,v_list_after,B_list,q_0,rho_list)
+            if demand>d:
+                R_list.append(revenue_cal(N,q,alpha_list,v_list,lda,rho_list))
+                lda_list.append(lda)
+                q_list.append(q)
+                mu_list_use.append(mu)
+                q_acc_list.append(q_acc)
+                break 
+        if itr == 0:
             v_sample = v_list
-            v_rounding = rounding(N,alpha_list,np.zeros((1,1)),v_list.reshape((-1,1)),interval,vmax,vmin)
         else:
             v_sample = np.concatenate((v_sample,v_list.reshape((-1,1))),1)
-            v_rounding = rounding(N,alpha_list,lda_list,v_sample,interval,vmax,vmin)
-        dis_sample = sample_stat(N,v_sample,v_max,v_min,interval)
-        q = all_F_q_cal(N,dis_sample,v_list,v_min,interval)
+    return R_list,lda_list,q_list,mu_list_use,q_acc_list
 
 
 
@@ -138,7 +158,7 @@ def all_F_q_cal(N,dis_array,v_list,v_min,interval):
         q[i] = q_quantile_cal(dis_array[i],v_list[i],v_min[i],interval)
     return q
 
-def q_v(N,v_min,v_max):
+def q_v(N,v_min,v_max,q):
     v = np.zeros((N))
     for i in range(N):
         v[i] = (v_max[i]-v_min[i])*q+v_min[i]
@@ -149,6 +169,16 @@ def q_quantile_cal(F_dis,v,v_min,interval):
    q = np.random.uniform(F_dis[a],F_dis[a+1],1)
    return q
 
+def draw(R_list,R):
+   num = len(R_list)
+   R_array = np.array(R_list)
+   R_2 = R*np.ones((num))
+   plt.plot(R_array)
+   plt.plot(R_2)
+   plt.legend(0)
+   plt.xlabel("sample number")
+   plt.ylabel("Revenue")
+   plt.show()
 
 
 if __name__ == "__main__":
@@ -166,7 +196,7 @@ if __name__ == "__main__":
     mu_list = np.linspace(0,mu_m,1000) 
     q_0 = prop*np.sum(B_list)
     d = (B_list+q_0)*prop_2
-    flag = 1
     q,lda,R = demand_satisfy(N,lda_list,mu_list,alpha_list,v_list,B_list,q_0,d,rho_list,v_max,v_min)
-
-    flag = 0
+    epoch = 3000
+    R_list,lda_list,q_list,mu_list_use,q_acc_list = demand_sample(N,lda_list,mu_list,alpha_list,B_list,q_0,d,rho_list,vmax,vmin,epoch)
+    draw(R_list,R)
