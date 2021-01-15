@@ -5,23 +5,22 @@ from matplotlib import pyplot as plt
 
 #q;v;mu;lda
 
-g = 200
-a_1 = 10
-b = 4
-a_2 = 0.1
+g = 10
+a_1 = 0.01
+a_3 = 0.3
+b = 3
+a = 0.5
 
 def N_f(q,v):
-    #return g*q-a_3/3*q*q*q-a_1*v*v*q+b*v*q+0.5*q*q*v
-    return g*q-a_1/3*q*q*q+0.5*b*v*q*q-a_2*v*v*q
+    return g*q-a_3/3*q*q*q-a_1*v*v*q+b*v*q+5*q*q*v
 
 def N_v(q,v):
-    return 0.5*b*q*q-2*a_2*v*q
+    return (-2*a_1*q*v+v*q)
 
 def inverse_NI(mu,v,rho):
-    #delta = v*v+4*a_3*(g-a*v*v+b*v+2/rho*a*v-1/rho*b-mu)
-    delta = (b*v-a_2*v*v-b/rho)*(b*v-a_2*v*v-b/rho)-4*(-a_1*(g-mu+2*a_2*v/rho))
+    delta = v*v+4*a_3*(g-a*v*v+b*v+2/rho*a*v-1/rho*b-mu)
     if delta>0:
-        x = (-(b*v-a_2*v*v-b/rho)-math.sqrt(delta))/(2*(-a_1))
+        x = (-v+math.sqrt(delta))/(2*a_3)
         #print(x)
         if x<0:
             #print("no solution delta")
@@ -38,16 +37,15 @@ def I_cal(q,v,alpha,lda,rho):
         I = N_f(q,v)-N_v(q,v)/rho-alpha*q
     else:
         I = N_f(q,v)-N_v(q,v)/rho
-        #print("I",I)
     return I
 
-def I_q0(v,rho):
-    return g + 2*a_2*v/rho
+def I_q0(v):
+    return g - a_1*v*v + b*v
 
-def mu_max(v_list,rho_list):
+def mu_max(v_list):
     x = []
     for i in range(v_list.shape[0]):
-        x.append(I_q0(v_list[i],rho_list[i]))
+        x.append(I_q0(v_list[i]))
     return max(x)
 
 def inverse_I(mu,alpha,lda,v,rho):
@@ -108,17 +106,17 @@ def demand_sample(N,alpha_list,mu_list,B_list,q_0,d,vmax,vmin,epoch):
         for lda in np.sort(alpha_list):
             v_list_rounding = rounding(N, alpha_list, lda * np.ones((1,1)),v_list.reshape((-1, 1)),interval, vmax, vmin)
             v_list_rounding = v_list_rounding.reshape([-1])
-            #print(np.linalg.norm((v_list_rounding-v_list),1))
+            print(np.linalg.norm((v_list_rounding-v_list),1))
             #print(v_list_rounding.shape,v_list.shape)
             #dis_sample = sample_stat(N, v_rounding, v_max, v_min, interval)
             #q = all_F_q_cal(N,dis_sample,v_list_rounding,v_min,interval)
             #v_list_after = q_v(N,v_min,v_max,q)
             v_list_after = v_q_v(N, v_rounding ,v_max, v_min, v_list_rounding ,interval)
-            rho_list = rho_cal(N,v_max,v_min,v_list_after)
+            rho_list = rho_cal(N,v_max,v_min,v_list)
             demand, q, mu, q_acc = allocation(N, lda, mu_list, alpha_list,v_list_after,B_list,q_0,rho_list)
             if demand>d:
-                R_list.append(abs(revenue_cal(N,q,alpha_list,v_list_after,lda,rho_list)-R))
-                #print("R_list",R_list[-1],"R",R)
+                R_list.append(revenue_cal(N,q,alpha_list,v_list,lda,rho_list))
+                print("R_list",R_list[-1],"R",R)
                 lda_list.append(lda)
                 q_list.append(q)
                 mu_list_use.append(mu)
@@ -137,9 +135,7 @@ def v_q_v(N, v_rounding ,v_max, v_min, v , interval):
         tmp = 0
         for j in range(mask.shape[0]):
             if v[i]>mask[j]:
-                a = v[i]
                 tmp += np.sum(v_rounding[i]==mask[j])
-                #print(tmp)
             else:
                 q = tmp/v_rounding.shape[1]
                 if q==1:
@@ -148,9 +144,8 @@ def v_q_v(N, v_rounding ,v_max, v_min, v , interval):
                     v[i] = v_min[i]
                 else:
                     tmp2 = (tmp+np.sum(v_rounding[i]==mask[j]))/v_rounding.shape[1]
-                    q = np.random.uniform(1)*(tmp2-tmp)+tmp
+                    q = np.random.uniform(tmp,tmp2,1)
                     v[i] = (v_max[i]-v_min[i])*q+v_min[i]
-                    #print("rounding",v[i]-a)
     return v
 
 
@@ -229,9 +224,8 @@ def draw(R_list,R):
 def ground_truth(N,alpha_list,mu_list,B_list,q_0,d,v_max,v_min,v_list):
     #print(v_list)
     rho_list = rho_cal(N,v_max,v_min,v_list)
-    mu_m = mu_max(v_list,rho_list)
+    mu_m = mu_max(v_list)
     mu_list = np.linspace(0,mu_m,1000) 
-    #print(mu_list)
     q_0 = prop*np.sum(B_list)
     d = (np.sum(B_list)+q_0)*prop_2
     q,lda,R = demand_satisfy(N,lda_list,mu_list,alpha_list,v_list,B_list,q_0,d,rho_list,v_max,v_min)
@@ -242,21 +236,21 @@ def ground_truth(N,alpha_list,mu_list,B_list,q_0,d,v_max,v_min,v_list):
 if __name__ == "__main__":
     name = './data.xlsx'
     prop = 0.02
-    prop_2 = 0.35
+    prop_2 = 0.055
     B_list,alpha_list =  read(name)
     lda_list = np.sort(alpha_list)
     #print(lda_list)
     N = B_list.shape[0]
-    v_max = np.maximum(np.random.rand((N))*10,50)
-    v_min = np.maximum(v_max-np.random.rand((N))*2,4)
+    v_max = np.maximum(np.random.rand((N))*500,50)
+    v_min = np.maximum(v_max-np.random.rand((N))*200,15)
     v_list = np.random.rand((N))*(v_max-v_min)+v_min
     print(v_list)
     rho_list = rho_cal(N,v_max,v_min,v_list)
-    mu_m = mu_max(v_list,rho_list)
+    mu_m = mu_max(v_list)
     mu_list = np.linspace(0,mu_m,1000) 
     q_0 = prop*np.sum(B_list)
     d = (np.sum(B_list)+q_0)*prop_2
     q,lda,R = demand_satisfy(N,lda_list,mu_list,alpha_list,v_list,B_list,q_0,d,rho_list,v_max,v_min)
-    epoch = 10000
+    epoch = 3000
     R_list,lda_list,q_list,mu_list_use,q_acc_list = demand_sample(N,alpha_list,mu_list,B_list,q_0,d,v_max,v_min,epoch)
-    draw(R_list,0)
+    draw(R_list,R)
